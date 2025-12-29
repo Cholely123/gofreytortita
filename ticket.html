@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>🧾 Tu Pedido - CUMPLEAÑOS LOIS</title>
+<style>
+body{font-family:Arial;background:#fff3e0;padding:20px;text-align:center;}
+.card{background:white;max-width:400px;margin:auto;padding:20px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.1);}
+.tower{display:flex;flex-direction:column-reverse;align-items:center;margin:10px 0;}
+.layer{width:80%;height:40px;margin:4px 0;border-radius:6px;line-height:40px;color:white;font-weight:bold;text-align:center;}
+.estado{font-size:1.2em;font-weight:bold;margin-top:10px;}
+.progress-container{background:#ddd;border-radius:20px;height:20px;margin:10px 0;}
+.progress-bar{height:100%;width:0%;border-radius:20px;transition:0.5s;}
+.stars{margin-top:10px;}
+.star{font-size:30px;color:#ccc;cursor:pointer;transition:0.2s;}
+.star.selected{color:#FFD700;}
+button{margin-top:15px;background:#f44336;color:white;padding:10px;border:none;border-radius:8px;width:100%;cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="card">
+<h2>🎉 CUMPLEAÑOS LOIS 🎉</h2>
+<p id="info"></p>
+<div class="tower" id="tower"></div>
+<p class="estado" id="estado"></p>
+<div class="progress-container"><div class="progress-bar" id="progress"></div></div>
+<div class="stars" id="stars"></div>
+<button onclick="avisar()">⚠️ No me lo han entregado</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCUtGv322RpaHehADB7BqHEkOjMFV2cEoc",
+  authDomain: "gofres-tortitas.firebaseapp.com",
+  projectId: "gofres-tortitas",
+  storageBucket: "gofres-tortitas.firebasestorage.app",
+  messagingSenderId: "840337514642",
+  appId: "1:840337514642:web:3986826058b711131e464b"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const id = new URLSearchParams(window.location.search).get("id");
+
+const infoEl=document.getElementById("info");
+const towerEl=document.getElementById("tower");
+const estadoEl=document.getElementById("estado");
+const progressEl=document.getElementById("progress");
+const starsEl=document.getElementById("stars");
+
+const colors = {
+  "Gofre":"#d2691e","Nocilla Blanca":"#FFF3B0","Nocilla Normal":"#4E342E","KitKat":"#C62828","Oreo":"#263238",
+  "Tortita":"#f4c430","Nocilla Blanca":"#FFF3B0","Nocilla Normal":"#4E342E","KitKat":"#C62828","Oreo":"#263238"
+};
+
+// Dibuja la torre visual
+function dibujarTorre(capas){
+  towerEl.innerHTML="";
+  capas.forEach(c=>{
+    const d=document.createElement("div");
+    d.className="layer";
+    d.style.backgroundColor = colors[c] || "#888";
+    d.textContent=c;
+    towerEl.appendChild(d);
+  });
+}
+
+// Actualiza barra de progreso
+function actualizarProgreso(estado){
+  let porcentaje=0,color="#2196F3";
+  switch(estado){
+    case"RECIBIDO": porcentaje=25;color="#2196F3"; break;
+    case"PREPARANDO": porcentaje=50;color="#FFC107"; break;
+    case"ENTREGANDO": porcentaje=75;color="#FF9800"; break;
+    case"ENTREGADO": porcentaje=100;color="#4CAF50"; break;
+  }
+  progressEl.style.width = porcentaje+"%";
+  progressEl.style.background = color;
+}
+
+// Crea sistema de estrellas para valorar
+function crearEstrellas(nota){
+  starsEl.innerHTML="";
+  for(let i=1;i<=5;i++){
+    const s=document.createElement("span");
+    s.innerHTML="★"; s.className="star";
+    if(nota && i<=nota) s.classList.add("selected");
+    s.addEventListener("click",()=>{
+      db.collection("pedidos").doc(id).update({nota:i}).then(()=>{
+        alert("¡Gracias por tu valoración!");
+        window.location.href="index.html"; // Redirige al inicio
+      });
+    });
+    starsEl.appendChild(s);
+  }
+}
+
+// Escuchar cambios en el pedido
+db.collection("pedidos").doc(id).onSnapshot(doc=>{
+  const p = doc.data();
+  if(!p) return;
+  infoEl.innerText = `${p.nombre} - ${p.tipo}`;
+  dibujarTorre(p.capas);
+  estadoEl.innerText = "Estado: " + p.estado;
+  actualizarProgreso(p.estado);
+  if(p.estado==="ENTREGADO") crearEstrellas(p.nota);
+});
+
+// Botón de aviso
+function avisar(){
+  db.collection("pedidos").doc(id).update({aviso:true}).then(()=>{
+    alert("Aviso enviado al admin");
+  });
+}
+</script>
+</body>
+</html>
