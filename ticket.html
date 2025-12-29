@@ -2,35 +2,133 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🧾 Tu Pedido - CUMPLEAÑOS LOIS</title>
+
 <style>
-body{font-family:Arial;background:#fff3e0;padding:20px;text-align:center;}
-.card{background:white;max-width:400px;margin:auto;padding:20px;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.1);}
-.tower{display:flex;flex-direction:column-reverse;align-items:center;margin:10px 0;}
-.layer{width:80%;height:40px;margin:4px 0;border-radius:6px;line-height:40px;color:white;font-weight:bold;text-align:center;}
-.estado{font-size:1.2em;font-weight:bold;margin-top:10px;}
-.progress-container{background:#ddd;border-radius:20px;height:20px;margin:10px 0;}
-.progress-bar{height:100%;width:0%;border-radius:20px;transition:0.5s;}
-.stars{margin-top:10px;}
-.star{font-size:30px;color:#ccc;cursor:pointer;transition:0.2s;}
+*{box-sizing:border-box;}
+
+body{
+  font-family:'Segoe UI',Arial,sans-serif;
+  background:#fff3e0;
+  margin:0;
+  padding:15px;
+  text-align:center;
+}
+
+.card{
+  background:white;
+  width:100%;
+  max-width:420px;
+  margin:auto;
+  padding:20px;
+  border-radius:18px;
+  box-shadow:0 6px 18px rgba(0,0,0,.15);
+}
+
+h2{
+  margin-top:0;
+  font-size:1.6em;
+}
+
+#info{
+  font-size:1.1em;
+  font-weight:bold;
+  margin-bottom:10px;
+}
+
+.tower{
+  display:flex;
+  flex-direction:column-reverse;
+  align-items:center;
+  margin:15px 0;
+}
+
+.layer{
+  width:90%;
+  height:45px;
+  margin:5px 0;
+  border-radius:10px;
+  line-height:45px;
+  color:white;
+  font-weight:bold;
+  font-size:1em;
+}
+
+.estado{
+  font-size:1.2em;
+  font-weight:bold;
+  margin:15px 0 5px;
+}
+
+.progress-container{
+  background:#ddd;
+  border-radius:25px;
+  height:22px;
+  margin-bottom:15px;
+  overflow:hidden;
+}
+
+.progress-bar{
+  height:100%;
+  width:0%;
+  border-radius:25px;
+  transition:0.5s;
+}
+
+.stars{
+  margin:15px 0;
+}
+
+.star{
+  font-size:36px;
+  color:#ccc;
+  cursor:pointer;
+  margin:0 3px;
+}
+
 .star.selected{color:#FFD700;}
-button{margin-top:15px;background:#f44336;color:white;padding:10px;border:none;border-radius:8px;width:100%;cursor:pointer;}
+
+button{
+  margin-top:15px;
+  background:#f44336;
+  color:white;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  width:100%;
+  font-size:1em;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+button:active{transform:scale(0.97);}
 </style>
 </head>
+
 <body>
 
 <div class="card">
-<h2>🎉 CUMPLEAÑOS LOIS 🎉</h2>
-<p id="info"></p>
-<div class="tower" id="tower"></div>
-<p class="estado" id="estado"></p>
-<div class="progress-container"><div class="progress-bar" id="progress"></div></div>
-<div class="stars" id="stars"></div>
-<button onclick="avisar()">⚠️ No me lo han entregado</button>
+  <h2>🎉 CUMPLEAÑOS LOIS 🎉</h2>
+
+  <div id="info"></div>
+
+  <div class="tower" id="tower"></div>
+
+  <div class="estado" id="estado"></div>
+
+  <div class="progress-container">
+    <div class="progress-bar" id="progress"></div>
+  </div>
+
+  <div class="stars" id="stars"></div>
+
+  <button onclick="avisar()">⚠️ No me lo han entregado</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyCUtGv322RpaHehADB7BqHEkOjMFV2cEoc",
@@ -42,62 +140,62 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+
 const id = new URLSearchParams(window.location.search).get("id");
 
-const infoEl=document.getElementById("info");
-const towerEl=document.getElementById("tower");
-const estadoEl=document.getElementById("estado");
-const progressEl=document.getElementById("progress");
-const starsEl=document.getElementById("stars");
+const infoEl = document.getElementById("info");
+const towerEl = document.getElementById("tower");
+const estadoEl = document.getElementById("estado");
+const progressEl = document.getElementById("progress");
+const starsEl = document.getElementById("stars");
 
 const colors = {
-  "Gofre":"#d2691e","Nocilla Blanca":"#FFF3B0","Nocilla Normal":"#4E342E","KitKat":"#C62828","Oreo":"#263238",
-  "Tortita":"#f4c430","Nocilla Blanca":"#FFF3B0","Nocilla Normal":"#4E342E","KitKat":"#C62828","Oreo":"#263238"
+  "Gofre":"#d2691e",
+  "Nocilla Blanca":"#FFF3B0",
+  "Nocilla Normal":"#4E342E",
+  "KitKat":"#C62828",
+  "Oreo":"#263238",
+  "Tortita":"#f4c430"
 };
 
-// Dibuja la torre visual
 function dibujarTorre(capas){
   towerEl.innerHTML="";
   capas.forEach(c=>{
     const d=document.createElement("div");
     d.className="layer";
     d.style.backgroundColor = colors[c] || "#888";
-    d.textContent=c;
+    d.textContent = c;
     towerEl.appendChild(d);
   });
 }
 
-// Actualiza barra de progreso
 function actualizarProgreso(estado){
   let porcentaje=0,color="#2196F3";
-  switch(estado){
-    case"RECIBIDO": porcentaje=25;color="#2196F3"; break;
-    case"PREPARANDO": porcentaje=50;color="#FFC107"; break;
-    case"ENTREGANDO": porcentaje=75;color="#FF9800"; break;
-    case"ENTREGADO": porcentaje=100;color="#4CAF50"; break;
-  }
+  if(estado==="RECIBIDO"){porcentaje=25;color="#2196F3";}
+  if(estado==="PREPARANDO"){porcentaje=50;color="#FFC107";}
+  if(estado==="ENTREGANDO"){porcentaje=75;color="#FF9800";}
+  if(estado==="ENTREGADO"){porcentaje=100;color="#4CAF50";}
   progressEl.style.width = porcentaje+"%";
   progressEl.style.background = color;
 }
 
-// Crea sistema de estrellas para valorar
 function crearEstrellas(nota){
   starsEl.innerHTML="";
   for(let i=1;i<=5;i++){
     const s=document.createElement("span");
-    s.innerHTML="★"; s.className="star";
+    s.className="star";
+    s.innerHTML="★";
     if(nota && i<=nota) s.classList.add("selected");
-    s.addEventListener("click",()=>{
+    s.onclick=()=>{
       db.collection("pedidos").doc(id).update({nota:i}).then(()=>{
         alert("¡Gracias por tu valoración!");
-        window.location.href="index.html"; // Redirige al inicio
+        window.location.href="index.html";
       });
-    });
+    };
     starsEl.appendChild(s);
   }
 }
 
-// Escuchar cambios en el pedido
 db.collection("pedidos").doc(id).onSnapshot(doc=>{
   const p = doc.data();
   if(!p) return;
@@ -108,12 +206,12 @@ db.collection("pedidos").doc(id).onSnapshot(doc=>{
   if(p.estado==="ENTREGADO") crearEstrellas(p.nota);
 });
 
-// Botón de aviso
 function avisar(){
   db.collection("pedidos").doc(id).update({aviso:true}).then(()=>{
     alert("Aviso enviado al admin");
   });
 }
 </script>
+
 </body>
 </html>
