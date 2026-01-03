@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🥞 Construye tus Tortitas</title>
+
+<style>
+body {
+  font-family:'Segoe UI',sans-serif;
+  background:#fff3e0;
+  text-align:center;
+  padding:20px;
+}
+
+.card {
+  background:white;
+  max-width:480px;
+  margin:auto;
+  padding:20px;
+  border-radius:15px;
+  box-shadow:0 8px 20px rgba(0,0,0,.15);
+}
+
+h2 { color:#f4c430; }
+
+.tower {
+  display:flex;
+  flex-direction:column-reverse;
+  align-items:center;
+  min-height:200px;
+  border:3px dashed #ddd;
+  border-radius:10px;
+  padding:10px;
+  margin:15px 0;
+}
+
+.layer {
+  width:80%;
+  height:38px;
+  margin:4px 0;
+  border-radius:6px;
+  line-height:38px;
+  color:white;
+  font-weight:bold;
+  text-shadow:0 1px 2px rgba(0,0,0,.3);
+}
+
+.controls button {
+  padding:10px;
+  margin:4px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.productos {
+  margin-top:15px;
+  text-align:left;
+}
+
+.producto {
+  background:#fff8e1;
+  padding:8px;
+  border-radius:8px;
+  margin-bottom:6px;
+  font-size:0.9em;
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+}
+
+.producto span {
+  font-size:0.85em;
+}
+
+.btn-main, .producto button {
+  background:#4CAF50;
+  color:white;
+  border:none;
+  border-radius:8px;
+  padding:6px 10px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.producto button {
+  background:#f44336;
+}
+
+.guardarProducto {
+  background:#63c2cf;
+  color:white;
+  border:none;
+  border-radius:8px;
+  padding:6px 10px;
+  cursor:pointer;
+  font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+  <h2>🥞 Construye tus Tortitas</h2>
+
+  <div class="tower" id="tower"></div>
+
+  <div class="controls">
+    <button onclick="add('Tortita')" style="background:#f4c430;color:#333;">Tortita</button>
+    <button onclick="add('Nocilla Blanca')" style="background:#FFF3B0;color:#333;">Nocilla Blanca</button>
+    <button onclick="add('Nocilla Normal')" style="background:#4E342E;">Nocilla Normal</button>
+    <button onclick="add('KitKat')" style="background:#C62828;">KitKat</button>
+    <button onclick="add('Oreo')" style="background:#263238;">Oreo</button>
+    <button onclick="remove()" style="background:#f44336;color:white;">Quitar</button>
+  </div>
+
+  <button class="guardarProducto" onclick="guardarProducto()">➕ Añadir esta tortita</button>
+
+  <div class="productos" id="listaProductos"></div>
+
+  <button class="btn-main" onclick="pedir()">🧾 PEDIR TODO</button>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCUtGv322RpaHehADB7BqHEkOjMFV2cEoc",
+  authDomain: "gofres-tortitas.firebaseapp.com",
+  projectId: "gofres-tortitas",
+  storageBucket: "gofres-tortitas.firebasestorage.app",
+  messagingSenderId: "840337514642",
+  appId: "1:840337514642:web:3986826058b711131e464b"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const tower = document.getElementById("tower");
+const listaProductos = document.getElementById("listaProductos");
+
+let stack = [];
+let productos = [];
+
+const colors = {
+  "Tortita":"#f4c430",
+  "Nocilla Blanca":"#FFF3B0",
+  "Nocilla Normal":"#4E342E",
+  "KitKat":"#C62828",
+  "Oreo":"#263238"
+};
+
+function createLayer(nombre){
+  const d=document.createElement("div");
+  d.className="layer";
+  d.textContent=nombre;
+  d.style.backgroundColor = colors[nombre];
+  return d;
+}
+
+function add(nombre){
+  if(nombre==="Tortita" && stack.filter(i=>i==="Tortita").length>=3)
+    return alert("Máx 3 tortitas");
+  if(stack.length>=5)
+    return alert("Máx 5 capas");
+  stack.push(nombre);
+  tower.appendChild(createLayer(nombre));
+}
+
+function remove(){
+  if(stack.length){
+    stack.pop();
+    tower.removeChild(tower.lastChild);
+  }
+}
+
+function guardarProducto(){
+  if(stack.length===0) return alert("Construye la tortita primero");
+  const subnombre = prompt("Ponle un nombre a esta tortita 😋");
+  if(!subnombre) return;
+
+  productos.push({
+    tipo:"Tortitas",  // <-- aquí poner "Tortitas" con s
+    nombre: subnombre,
+    capas:[...stack],
+    estado:"RECIBIDO"
+  });
+
+  stack=[];
+  tower.innerHTML="";
+  renderProductos();
+}
+
+
+function renderProductos(){
+  listaProductos.innerHTML="";
+  productos.forEach((p,i)=>{
+    const div = document.createElement("div");
+    div.className = "producto";
+    const capasText = `🥞 ${p.nombre} → ${p.capas.join(", ")}`;
+    div.innerHTML = `<span>${capasText}</span>`;
+    const btn = document.createElement("button");
+    btn.innerText="Eliminar";
+    btn.onclick=()=> {
+      productos.splice(i,1);
+      renderProductos();
+    };
+    div.appendChild(btn);
+    listaProductos.appendChild(div);
+  });
+}
+
+function pedir(){
+  if(productos.length===0) return alert("Añade al menos una tortita");
+  const nombreCliente = prompt("¿Tu nombre?");
+  if(!nombreCliente) return;
+
+db.collection("pedidos").add({
+  nombre: nombreCliente,
+  productos,
+  estado:"RECIBIDO",
+  aviso:false,
+  fecha:Date.now()
+}).then(doc=>{
+  alert("✅ Pedido enviado!");
+  window.location = "ticket.html?id=" + doc.id;
+});
+
+}
+</script>
+
+</body>
+</html>

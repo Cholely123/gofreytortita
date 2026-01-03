@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cumpleaños Lois 🎉</title>
+<style>
+body {
+  font-family: 'Segoe UI', sans-serif;
+  background: #ffe4b5;
+  text-align: center;
+  padding: 40px;
+  margin:0;
+}
+h1 { font-size:2.8em; color:#d2691e; margin-bottom:20px; }
+p { font-size:1.2em; margin-bottom:30px; }
+button { font-size:1.6em; padding:25px 50px; margin:15px; border:none; border-radius:20px; cursor:pointer; font-weight:bold; box-shadow:0 6px 18px rgba(0,0,0,.25); transition:0.25s; }
+button:hover { transform: scale(1.08); }
+.gofre { background:#d2691e; color:white; }
+.tortitas { background:#f4c430; color:#333; }
+.stats { margin-top:40px; font-size:1.3em; font-weight:bold; }
+.stats p { margin:10px 0; color:#444; }
+</style>
+</head>
+<body>
+
+<h1>🎉 CUMPLEAÑOS LOIS 🎉</h1>
+<p>Elige qué quieres pedir:</p>
+
+<div>
+  <button class="gofre" onclick="location.href='gofres.html'">🧇 Gofres</button>
+  <button class="tortitas" onclick="location.href='tortitas.html'">🥞 Tortitas</button>
+</div>
+
+<div class="stats">
+  <p id="mediaGofres">Media Gofres: -- ⭐</p>
+  <p id="mediaTortitas">Media Tortitas: -- ⭐</p>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCUtGv322RpaHehADB7BqHEkOjMFV2cEoc",
+  authDomain: "gofres-tortitas.firebaseapp.com",
+  projectId: "gofres-tortitas",
+  storageBucket: "gofres-tortitas.firebasestorage.app",
+  messagingSenderId: "840337514642",
+  appId: "1:840337514642:web:3986826058b711131e464b"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const mediaGofres = document.getElementById("mediaGofres");
+const mediaTortitas = document.getElementById("mediaTortitas");
+
+// Función para calcular media por tipo recorriendo todos los subproductos
+function calcularMedia(pedidos, tipo) {
+  let suma = 0, count = 0;
+  pedidos.forEach(pedido => {
+    const productos = pedido.productos || [];
+    productos.forEach(sub => {
+      if(sub.tipo === tipo && pedido.nota) {
+        suma += pedido.nota;
+        count++;
+      }
+    });
+    // Compatibilidad con pedidos antiguos que no tienen array de productos
+    if(!pedido.productos && pedido.tipo === tipo && pedido.nota) {
+      suma += pedido.nota;
+      count++;
+    }
+  });
+  return count > 0 ? (suma / count).toFixed(1) : "--";
+}
+
+// Escuchar pedidos en tiempo real
+db.collection("pedidos").onSnapshot(snapshot => {
+  const pedidos = [];
+  snapshot.forEach(doc => pedidos.push(doc.data()));
+
+  const mediaG = calcularMedia(pedidos, "Gofre");
+  const mediaT = calcularMedia(pedidos, "Tortitas");
+
+  mediaGofres.innerText = `Media Gofres: ${mediaG} ⭐`;
+  mediaTortitas.innerText = `Media Tortitas: ${mediaT} ⭐`;
+});
+</script>
+
+</body>
+</html>
